@@ -1,0 +1,44 @@
+pipeline {
+    agent { label 'dev' }
+
+    stages {
+        stage('Source Code Checkout') {
+            steps {
+                git 'https://github.com/21A25A0509/dicet_tv.git'
+            }
+        }
+        stage('Build Application') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Docker Environment Cleanup') {
+            steps {
+                sh '''docker rm -f my-app || true'''
+                sh 'docker rmi 21a25a0509/tomcat-app:latest || true'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("21a25a0509/tomcat-app:latest")
+                }
+            }
+        }
+        stage('Login & Push to Docker Hub') {
+            steps {
+                script {
+                    withDockerRegistry([credentialsId: 'docker']) {
+                        dockerImage.push()
+                    }
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh 'docker run -d -p 8085:8080 --name my-app 21a25a0509/tomcat-app:latest'
+            }
+        }
+    }
+}
