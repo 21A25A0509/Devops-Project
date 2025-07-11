@@ -1,0 +1,33 @@
+pipeline {
+    agent {
+        label 'dev'  
+    }
+    
+    tools {
+        maven 'Maven' 
+    }
+    
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/21A25A0509/live01.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                powershell 'mvn clean install'
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                script {
+                    deploy adapters: [
+                        tomcat9(credentialsId: 'tom', url: 'http://65.1.107.37:8080/')
+                    ], contextPath: 'live', war: '**/*.war'
+                }
+            }
+        }
+    }
+}
