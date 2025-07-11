@@ -1,0 +1,25 @@
+pipeline {
+    agent{
+        label 'dev'
+    }
+    
+    stages {
+        stage('git') {
+            steps {
+               git branch: 'main', url: 'https://github.com/21A25A0509/live01.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+        stage('sonar') {
+            steps {
+                withSonarQubeEnv(installationName:'sonar' ,credentialsId: 'sonar-new') {
+                    sh 'mvn sonar:sonar'
+             }
+            }
+        }
+    }
+}
